@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+ directUrl =  env("DIRECT_URL")
+}
+
+enum PlanName {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SupportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  PRIORITY
+}
+
+enum AlertStatus {
+  ACTIVE
+  TRIGGERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  planId           Int
+  plan             Plan           @relation(fields: [planId], references: [id])
+  trackingCoins    TrackingCoin[]
+  priceAlerts      PriceAlert[]
+  payments         Payment[]
+  subscribedAt     DateTime       @default(now()) // Added default
+  renewsAt         DateTime       @default(dbgenerated("now() + interval '1 month'")) // Auto-renew logic
+  binanceApiKey    String?
+  binanceSecretKey String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([planId])
+}
+
+model Plan {
+  id                  Int              @id @default(autoincrement()) // Added auto-increment
+  name                PlanName         @unique
+  description         String?
+  price               Decimal          @default(0.00) // Added default
+  maxTrackingCoins    Int              @default(5) // Added default
+  maxPriceAlerts      Int              @default(10) // Added default
+  supportPriority     SupportPriority
+  apiAccess           Boolean          @default(false)
+  historicalData      Boolean          @default(false)
+  customReports       Boolean          @default(false)
+  teamMembers         Int              @default(1)
+  exchangeConnections Int              @default(1)
+  users               User[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model TrackingCoin {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  coinId    String   // CoinGecko ID format
+  symbol    String   @db.VarChar(10)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, coinId])
+  @@index([coinId])
+}
+
+model PriceAlert {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  coinId      String
+  symbol      String      @db.VarChar(10)
+  targetPrice Decimal     @db.Decimal(10, 2)
+  status      AlertStatus @default(ACTIVE)
+  triggeredAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId, status])
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  amount     Decimal       @db.Decimal(10, 2)
+  status     PaymentStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([userId, status])
+}
