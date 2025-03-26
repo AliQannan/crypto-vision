@@ -12,11 +12,15 @@
     "@clerk/nextjs": "^6.12.5",
     "@prisma/client": "^6.5.0",
     "@supabase/supabase-js": "^2.49.1",
+    "framer-motion": "^12.5.0",
+    "lucide-react": "^0.483.0",
     "next": "15.2.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-toastify": "^11.0.5",
     "supabase": "^2.19.7",
-    "svix": "^1.61.4"
+    "svix": "^1.61.4",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
